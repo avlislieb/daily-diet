@@ -137,4 +137,70 @@ export async function mealsRoutes(app: FastifyInstance) {
       return replay.status(201).send()
     },
   )
+
+  app.put(
+    '/:id',
+    {
+      preHandler: [validationSessionIdExists],
+    },
+    async (req, replay) => {
+      const createSchemaToParams = z.object({
+        id: z.string().uuid(),
+      })
+      const createSchema = z.object({
+        name: z.string(),
+        description: z.string(),
+        date: z.coerce.date(),
+        mealDate: z.date(),
+        hours: z.string(),
+        onDiet: z.coerce.boolean(),
+      })
+
+      const body: any = req.body
+      body.mealDate = groupDateAndTime(body.date, body.hours)
+
+      try {
+        const { name, description, onDiet, mealDate } = createSchema.parse(body)
+        const { id } = createSchemaToParams.parse(req.params)
+
+        const { sessionId } = req.cookies
+        const formattedMealDateString = formatDateToIsoString(mealDate)
+
+        const whereMeal = {
+          user_id: sessionId,
+          id,
+        }
+        const meal = await knex('meals').where(whereMeal).first()
+        if (!meal) {
+          return replay.status(404).send({ message: 'Meal not found.' })
+        }
+
+        await knex('meals').where(whereMeal).update({
+          name,
+          description,
+          meal_date: formattedMealDateString,
+          user_id: sessionId,
+          on_diet: onDiet,
+        })
+      } catch (error: any) {
+        let jsonResponse: {
+          message: string
+          error?: object
+        } = {
+          message: 'Error to insert meal',
+        }
+
+        if (error instanceof ZodError) {
+          jsonResponse = {
+            ...jsonResponse,
+            error: error.formErrors.fieldErrors,
+          }
+        }
+
+        return replay.status(400).send(jsonResponse)
+      }
+
+      return replay.status(200).send()
+    },
+  )
 }

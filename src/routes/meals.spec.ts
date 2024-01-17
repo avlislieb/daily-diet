@@ -3,6 +3,7 @@ import { app } from '../app'
 import { execSync } from 'node:child_process'
 import request from 'supertest'
 import TestAgent from 'supertest/lib/agent'
+import { object } from 'zod'
 
 describe('meals routes', () => {
   let agent: TestAgent
@@ -127,7 +128,7 @@ describe('meals routes', () => {
     )
   })
 
-  it.only('should be able to delete a specific meal', async () => {
+  it('should be able to delete a specific meal', async () => {
     const createUserResponse = await request(app.server)
       .post('/users')
       .send({
@@ -162,5 +163,56 @@ describe('meals routes', () => {
       .get(`/meals/${mealId}`)
       .set('Cookie', cookies)
       .expect(404)
+  })
+
+  it.only('should be able to edit a meal', async () => {
+    const createUserResponse = await request(app.server)
+      .post('/users')
+      .send({
+        name: 'GAB',
+        email: 'gab@test.com',
+      })
+      .expect(201)
+
+    const cookies = createUserResponse.get('Set-cookie')
+
+    await agent
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'test',
+        description: 'stest',
+        date: '2023-02-13',
+        hours: '11:04',
+        onDiet: true,
+      })
+      .expect(201)
+
+    const listMealsResponse = await agent.get('/meals').set('Cookie', cookies)
+    const mealId = listMealsResponse.body.meals[0].id
+
+    await agent
+      .put(`/meals/${mealId}`)
+      .set('Cookie', cookies)
+      .send({
+        name: 'test editado',
+        description: 'stest editado',
+        date: '2023-02-13',
+        hours: '11:04',
+        onDiet: false,
+      })
+      .expect(200)
+
+    const getMealEditResponse = await agent
+      .get(`/meals/${mealId}`)
+      .set('Cookie', cookies)
+
+    expect(getMealEditResponse.body).toMatchObject(
+      expect.objectContaining({
+        name: 'test editado',
+        description: 'stest editado',
+        on_diet: 0,
+      }),
+    )
   })
 })
