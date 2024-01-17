@@ -50,6 +50,33 @@ export async function mealsRoutes(app: FastifyInstance) {
     },
   )
 
+  app.delete(
+    '/:id',
+    {
+      preHandler: [validationSessionIdExists],
+    },
+    async (req, replay) => {
+      const createSchemaParams = z.object({
+        id: z.string().uuid(),
+      })
+
+      try {
+        const { id } = createSchemaParams.parse(req.params)
+        const userId = req.cookies.sessionId
+        await knex('meals')
+          .where({
+            user_id: userId,
+            id,
+          })
+          .del()
+
+        return replay.status(204).send()
+      } catch (error) {
+        return replay.status(400).send({ message: 'bad request' })
+      }
+    },
+  )
+
   app.post(
     '/',
     {

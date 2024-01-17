@@ -21,7 +21,7 @@ describe('meals routes', () => {
     await execSync('npm run knex migrate:latest')
   })
 
-  it('shold not be able list meals without cookies', async () => {
+  it('should not be able list meals without cookies', async () => {
     const listMealsResponse = await agent.get('/meals').expect(401)
 
     console.log('listMealsResponse.body', listMealsResponse.body)
@@ -34,7 +34,7 @@ describe('meals routes', () => {
     )
   })
 
-  it('shold be able create a new meal', async () => {
+  it('should be able create a new meal', async () => {
     const createUserResponse = await request(app.server)
       .post('/users')
       .send({
@@ -58,7 +58,7 @@ describe('meals routes', () => {
       .expect(201)
   })
 
-  it('shold be able to list meals of user', async () => {
+  it('should be able to list meals of user', async () => {
     const createUserResponse = await request(app.server)
       .post('/users')
       .send({
@@ -89,7 +89,7 @@ describe('meals routes', () => {
     ])
   })
 
-  it.only('shold be able to list meals of user', async () => {
+  it('should be able to show a specific meal', async () => {
     const createUserResponse = await request(app.server)
       .post('/users')
       .send({
@@ -125,5 +125,44 @@ describe('meals routes', () => {
         id: mealId,
       }),
     )
+  })
+
+  it.only('should be able to delete a specific meal', async () => {
+    const createUserResponse = await request(app.server)
+      .post('/users')
+      .send({
+        name: 'GAB',
+        email: 'gab@test.com',
+      })
+      .expect(201)
+
+    const cookies = createUserResponse.get('Set-cookie')
+
+    await agent
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'test',
+        description: 'stest',
+        date: '2023-02-13',
+        hours: '11:04',
+        onDiet: 1,
+      })
+      .expect(201)
+
+    const listMealsResponse = await agent
+      .get('/meals')
+      .set('Cookie', cookies)
+      .expect(200)
+    const mealId = listMealsResponse.body.meals[0].id
+
+    await agent.delete(`/meals/${mealId}`).set('Cookie', cookies).expect(204)
+
+    const listMealsAfterDeleteResponse = await agent
+      .get('/meals')
+      .set('Cookie', cookies)
+      .expect(200)
+
+    expect(listMealsAfterDeleteResponse.body.meals).toEqual([])
   })
 })
