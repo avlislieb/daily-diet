@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "knex": "node --no-warnings --import tsx ./node_modules/.bin/knex",
-    "test": "vitest"
+    "test": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,7 @@
     "@rocketseat/eslint-config": "^2.1.0",
     "@types/node": "^20.11.2",
     "@types/supertest": "^6.0.2",
+    "@vitest/coverage-v8": "^1.2.1",
     "eslint": "^8.56.0",
     "supertest": "^6.3.4",
     "tsx": "^4.7.0",

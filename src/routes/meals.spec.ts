@@ -159,10 +159,8 @@ describe('meals routes', () => {
     await agent.delete(`/meals/${mealId}`).set('Cookie', cookies).expect(204)
 
     const listMealsAfterDeleteResponse = await agent
-      .get('/meals')
+      .get(`/meals/${mealId}`)
       .set('Cookie', cookies)
-      .expect(200)
-
-    expect(listMealsAfterDeleteResponse.body.meals).toEqual([])
+      .expect(404)
   })
 })

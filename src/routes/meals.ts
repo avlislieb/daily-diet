@@ -43,6 +43,9 @@ export async function mealsRoutes(app: FastifyInstance) {
           .select('*')
           .first()
 
+        if (!meals)
+          return replay.status(404).send({ message: 'Meal not found' })
+
         return replay.send(meals)
       } catch (error) {
         return replay.status(400).send({ message: 'bad request' })
@@ -63,15 +66,19 @@ export async function mealsRoutes(app: FastifyInstance) {
       try {
         const { id } = createSchemaParams.parse(req.params)
         const userId = req.cookies.sessionId
-        await knex('meals')
-          .where({
-            user_id: userId,
-            id,
-          })
-          .del()
+        const whereMeal = {
+          user_id: userId,
+          id,
+        }
+        const meal = await knex('meals').where(whereMeal).first()
+        if (!meal)
+          return replay.status(404).send({ message: 'Meal not found.' })
+
+        await knex('meals').where(whereMeal).del()
 
         return replay.status(204).send()
       } catch (error) {
+        console.log('error', error)
         return replay.status(400).send({ message: 'bad request' })
       }
     },
