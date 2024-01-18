@@ -18,7 +18,7 @@ export async function usersRoutes(app: FastifyInstance) {
       name: z.string(),
       email: z.string(),
     })
-    console.log('easdf')
+
     const { name, email } = createUsersSchema.parse(req.body)
 
     let sessionId = req.cookies.sessionId

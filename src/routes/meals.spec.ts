@@ -165,7 +165,7 @@ describe('meals routes', () => {
       .expect(404)
   })
 
-  it.only('should be able to edit a meal', async () => {
+  it('should be able to edit a meal', async () => {
     const createUserResponse = await request(app.server)
       .post('/users')
       .send({
@@ -212,6 +212,82 @@ describe('meals routes', () => {
         name: 'test editado',
         description: 'stest editado',
         on_diet: 0,
+      }),
+    )
+  })
+
+  it('should be able to retrieve metrics for a user', async () => {
+    const createUserResponse = await request(app.server)
+      .post('/users')
+      .send({
+        name: 'GAB',
+        email: 'gab@test.com',
+      })
+      .expect(201)
+
+    const cookies = createUserResponse.get('Set-cookie')
+
+    await agent
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'test',
+        description: 'stest',
+        date: '2023-02-13',
+        hours: '11:04',
+        onDiet: true,
+      })
+      .expect(201)
+
+    await agent
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'test2',
+        description: 'stest2',
+        date: '2023-02-13',
+        hours: '11:04',
+        onDiet: false,
+      })
+      .expect(201)
+
+    await agent
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'test2',
+        description: 'stest2',
+        date: '2023-02-13',
+        hours: '11:04',
+        onDiet: true,
+      })
+      .expect(201)
+
+    await agent
+      .post('/meals')
+      .set('Cookie', cookies)
+      .send({
+        name: 'test2',
+        description: 'stest2',
+        date: '2023-02-13',
+        hours: '11:04',
+        onDiet: true,
+      })
+      .expect(201)
+
+    const getMealSumaryResponse = await agent
+      .get(`/meals/sumary`)
+      .set('Cookie', cookies)
+    // .expect(200)
+
+    console.log('getMealSumaryResponse.body', getMealSumaryResponse.body)
+
+    expect(getMealSumaryResponse.body).toMatchObject(
+      expect.objectContaining({
+        total_meals: 4,
+        total_meals_on_diet: 3,
+        total_meals_outside_the_diet: 1,
+        best_on_diet_sequency: 2,
       }),
     )
   })

@@ -203,4 +203,61 @@ export async function mealsRoutes(app: FastifyInstance) {
       return replay.status(200).send()
     },
   )
+
+  app.get(
+    '/sumary',
+    {
+      preHandler: [validationSessionIdExists],
+    },
+    async (req, replay) => {
+      const userId = req.cookies.sessionId
+      console.log('userId', userId)
+      const totalMeals = await knex('meals')
+        .where('user_id', userId)
+        .orderBy('meal_date', 'desc')
+
+      const totalMealsOnDiet = await knex('meals')
+        .where({
+          user_id: userId,
+          on_diet: 1,
+        })
+        .count('*', { as: 'total' })
+        .first()
+
+      const totalMealsOutsideTheDiet = await knex('meals')
+        .where({
+          user_id: userId,
+          on_diet: 0,
+        })
+        .count('*', { as: 'total' })
+        .first()
+
+      const { bestOnDietSequency } = totalMeals.reduce(
+        (acc, meal) => {
+          if (meal.on_diet) {
+            acc.currentSequence += 1
+          } else {
+            acc.currentSequence = 0
+          }
+
+          if (acc.currentSequence > acc.bestOnDietSequency) {
+            acc.bestOnDietSequency = acc.currentSequence
+          }
+
+          return acc
+        },
+        {
+          bestOnDietSequency: 0,
+          currentSequence: 0,
+        },
+      )
+
+      return replay.send({
+        total_meals: totalMeals.length,
+        total_meals_on_diet: totalMealsOnDiet?.total ?? 0,
+        total_meals_outside_the_diet: totalMealsOutsideTheDiet?.total ?? 0,
+        best_on_diet_sequency: bestOnDietSequency,
+      })
+    },
+  )
 }
