@@ -103,4 +103,14 @@ describe('Users routes', () => {
       })
       .expect(500)
   })
+
+  it('should be able to create a new user and list user SOLID', async () => {
+    await request(app.server)
+      .post('/usuario')
+      .send({
+        name: 'GAB',
+        email: 'gab@test.com',
+      })
+      .expect(201)
+  })
 })
